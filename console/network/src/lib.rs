@@ -114,7 +114,7 @@ pub trait Network:
     const MAX_DATA_ENTRIES: usize = 4096;
     /// The maximum number of fields in data (must not exceed u16::MAX).
     #[allow(clippy::cast_possible_truncation)]
-    const MAX_DATA_SIZE_IN_FIELDS: u32 = ((128 * 1024 * 8) / Field::<Self>::SIZE_IN_DATA_BITS) as u32;
+    const MAX_DATA_SIZE_IN_FIELDS: u32 = ((128 * 1024 * 8 * 8) / Field::<Self>::SIZE_IN_DATA_BITS) as u32;
 
     /// The maximum number of functions in a program.
     const MAX_FUNCTIONS: usize = 15;
@@ -126,7 +126,7 @@ pub trait Network:
     const MAX_COMMANDS: usize = u8::MAX as usize;
 
     /// The maximum number of inputs per transition.
-    const MAX_INPUTS: usize = 64;
+    const MAX_INPUTS: usize = 8192;
     /// The maximum number of outputs per transition.
     const MAX_OUTPUTS: usize = 8;
 

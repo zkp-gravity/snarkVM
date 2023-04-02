@@ -332,6 +332,7 @@ where
         terminator: &AtomicBool,
         zk_rng: &mut R,
     ) -> Result<Self::Proof, SNARKError> {
+        let prover_start = std::time::Instant::now();
         let prover_time = start_timer!(|| "Marlin::Prover");
         let batch_size = circuits.len();
         if batch_size == 0 {
@@ -639,6 +640,8 @@ where
 
         let proof = Proof::<E>::new(batch_size, commitments, evaluations, prover_fifth_message, pc_proof)?;
         assert_eq!(proof.pc_proof.is_hiding(), MM::ZK);
+        let elapsed_time = prover_start.elapsed();
+        println!("Proving took took {} milliseconds.", elapsed_time.as_millis());
 
         #[cfg(debug_assertions)]
         if !Self::verify_batch(fs_parameters, &circuit_proving_key.circuit_verifying_key, &public_input, &proof)? {
