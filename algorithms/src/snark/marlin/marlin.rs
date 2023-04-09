@@ -1002,20 +1002,22 @@ mod lookup_test {
 
     use core::ops::MulAssign;
 
-    const ITERATIONS: usize = 10;
-
     #[derive(Clone)]
     pub struct Circuit<F: Field> {
         pub a: Option<F>,
         pub b: Option<F>,
         pub num_constraints: usize,
         pub num_variables: usize,
-        pub table: LookupTable<F>,
+        pub tables: Vec<LookupTable<F>>,
+        pub entries_to_lookup: Vec<bool>,
     }
 
     impl<ConstraintF: Field> ConstraintSynthesizer<ConstraintF> for Circuit<ConstraintF> {
         fn generate_constraints<C: ConstraintSystem<ConstraintF>>(&self, cs: &mut C) -> Result<(), SynthesisError> {
-            cs.add_lookup_table(self.table.clone());
+            for table in &self.tables {
+                cs.add_lookup_table(table.clone());
+                
+            }
             let a = cs.alloc(|| "a", || self.a.ok_or(SynthesisError::AssignmentMissing))?;
             let b = cs.alloc(|| "b", || self.b.ok_or(SynthesisError::AssignmentMissing))?;
             let c = cs.alloc_input(
@@ -1028,13 +1030,22 @@ mod lookup_test {
                     Ok(a)
                 },
             )?;
-            cs.enforce_lookup(
-                || "c_lookup",
-                |lc| lc + LinearCombination::from(a),
-                |lc| lc + LinearCombination::from(b),
-                |lc| lc + LinearCombination::from(c),
-                0,
-            )?;
+            for i in 0..self.tables.len() {
+                let mut lookup_value = self.a.ok_or(SynthesisError::AssignmentMissing)?;
+                for j in 0..self.tables[i].table.len() {
+                    lookup_value += ConstraintF::one();
+                    if self.entries_to_lookup.len() > j && self.entries_to_lookup[j] {
+                        let lookup_var = cs.alloc(|| format!("lookup_var_{i}_{j}"), || Ok(lookup_value))?;
+                        cs.enforce_lookup(
+                            || format!("c_lookup_{i}_{j}"),
+                            |lc| lc + LinearCombination::from(lookup_var),
+                            |lc| lc + LinearCombination::from(b),
+                            |lc| lc + LinearCombination::from(c),
+                            i,
+                        )?;
+                    }
+                }
+            }
 
             for i in 0..(self.num_variables - 3) {
                 let _ = cs.alloc(|| format!("var {}", i), || self.a.ok_or(SynthesisError::AssignmentMissing))?;
@@ -1055,33 +1066,81 @@ mod lookup_test {
     fn marlin_snark_lookup_test() {
         let mut rng = TestRng::default();
 
-        for _ in 0..ITERATIONS {
-            // Construct the circuit.
+        // testing all permutations of potential entries to lookup
+        let test_table_entries_to_lookups = std::collections::BTreeMap::from([
+            (1, vec![
+                    vec![false], 
+                    vec![true]
+                ]
+            ),
+            (2, vec![
+                    vec![false,false], 
+                    vec![true,false], 
+                    vec![false,true], 
+                    vec![true,true]
+                ]
+            ),
+            (3, vec![
+                    vec![false,false,false], 
+                    vec![true,false,false], 
+                    vec![false,true,false], 
+                    vec![false,false,true], 
+                    vec![true,true,false], 
+                    vec![true,false,true], 
+                    vec![false,true,true], 
+                    vec![true,true,true]
+                ]
+            ),
+            (10000, vec![
+                    vec![false;10000],
+                    vec![true;10000]
+                ]
+            ),
+        ]);
 
-            let a = Fr::rand(&mut rng);
-            let b = Fr::rand(&mut rng);
-            let mut c = a;
-            c.mul_assign(&b);
+        // in each respective for-loop we test: (1) different amounts of lookup tables (2) different amount of entries to the lookup tables (3) different amount of lookups
+        let max_num_tables = 2;
+        for num_tables in 1..(max_num_tables + 1) {
+            for (table_entries, lookups) in &test_table_entries_to_lookups {
 
-            let mut table = LookupTable::default();
-            let lookup_value = [a, b];
-            table.fill(lookup_value, c);
+                let a = Fr::rand(&mut rng);
+                let b = Fr::rand(&mut rng);
+                let mut c = a;
+                c.mul_assign(&b);
 
-            let circ = Circuit { a: Some(a), b: Some(b), num_constraints: 100, num_variables: 25, table };
+                let mut table = LookupTable::default();
 
-            // Generate the circuit parameters.
+                let mut custom_lookup_value = a;
+                for _ in 0..*table_entries {
+                    custom_lookup_value += Fr::one();
+                    let lookup_key = [custom_lookup_value, b];
+                    table.fill(lookup_key, c);
+                }
 
-            let (pk, vk) = TestSNARK::setup(&circ, &mut SRS::CircuitSpecific).unwrap();
+                for entries_to_lookup in lookups {
+                    let circ = Circuit { 
+                        a: Some(a), 
+                        b: Some(b), 
+                        num_constraints: 100, 
+                        num_variables: 25, 
+                        tables: vec![table.clone(); num_tables], 
+                        entries_to_lookup: entries_to_lookup.clone() 
+                    };
 
-            // Test native proof and verification.
-            let fs_parameters = FS::sample_parameters();
+                    // Generate the circuit parameters.
+                    let (pk, vk) = TestSNARK::setup(&circ, &mut SRS::CircuitSpecific).unwrap();
 
-            let proof = TestSNARK::prove(&fs_parameters, &pk, &circ, &mut rng).unwrap();
+                    // Test native proof and verification.
+                    let fs_parameters = FS::sample_parameters();
 
-            assert!(
-                TestSNARK::verify(&fs_parameters, &vk.clone(), [c].as_ref(), &proof).unwrap(),
-                "The native verification check fails."
-            );
+                    let proof = TestSNARK::prove(&fs_parameters, &pk, &circ, &mut rng).unwrap();
+
+                    assert!(
+                        TestSNARK::verify(&fs_parameters, &vk.clone(), [c].as_ref(), &proof).unwrap(),
+                        "The native verification check fails."
+                    );
+                }
+            }
         }
     }
 }

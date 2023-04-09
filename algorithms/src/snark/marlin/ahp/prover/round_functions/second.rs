@@ -27,7 +27,6 @@ use crate::{
         MarlinMode,
     },
 };
-#[cfg(not(feature = "parallel"))]
 use itertools::Itertools;
 use snarkvm_fields::PrimeField;
 use snarkvm_utilities::{cfg_iter, cfg_iter_mut};
@@ -84,9 +83,10 @@ impl<F: PrimeField, MM: MarlinMode> AHPForR1CS<F, MM> {
                     .collect::<Vec<F>>()
             })
             .collect::<Vec<F>>();
+        table_evals.sort();
         // If the vector isn't empty we need to fill it with one of its elements.
         if !table_evals.is_empty() {
-            table_evals.resize(state.index.index_info.num_constraints, table_evals[0]);
+            table_evals.resize(state.index.index_info.num_constraints, table_evals[0]); 
         } else {
             table_evals.resize(state.index.index_info.num_constraints, F::zero());
         }
@@ -193,6 +193,8 @@ impl<F: PrimeField, MM: MarlinMode> AHPForR1CS<F, MM> {
         );
         let mut s_evals = f_evals.clone();
         s_evals.extend(table_evals);
+        s_evals.sort();
+
         // Split into alternating halves.
         let (s_1_evals, s_2_evals): (Vec<F>, Vec<F>) = s_evals.chunks(2).map(|els| (els[0], els[1])).unzip();
         let s_1_poly = LabeledPolynomial::new(
@@ -217,11 +219,11 @@ impl<F: PrimeField, MM: MarlinMode> AHPForR1CS<F, MM> {
         // Compute divisions for each constraint
         let product_arguments = f_evals
             .iter()
-            .zip(table_evals)
-            .zip(&s_1_evals)
-            .zip(&s_2_evals)
-            .zip(delta_table_omega_evals)
-            .zip(&delta_s_1_omega_evals)
+            .zip_eq(table_evals)
+            .zip_eq(&s_1_evals)
+            .zip_eq(&s_2_evals)
+            .zip_eq(delta_table_omega_evals)
+            .zip_eq(&delta_s_1_omega_evals)
             .take(f_evals.len() - 1)
             .map(|(((((f, t), s_1), s_2), d_t_omega), d_s_1_omega)| {
                 let one_plus_delta = F::one() + delta;
