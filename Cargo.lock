@@ -321,7 +321,7 @@ dependencies = [
  "bitflags",
  "clap_derive",
  "clap_lex",
- "indexmap",
+ "indexmap 1.9.3",
  "once_cell",
  "strsim",
  "termcolor",
@@ -667,8 +667,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2d328fc287c61314c4a61af7cfdcbd7e678e39778488c7cb13ec133ce0f4059"
 dependencies = [
  "fsio",
- "indexmap",
+ "indexmap 1.9.3",
 ]
+
+[[package]]
+name = "equivalent"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88bffebc5d80432c9b140ee17875ff173a8ab62faad5b257da912bd2f6c1c0a1"
 
 [[package]]
 name = "errno"
@@ -904,7 +910,7 @@ dependencies = [
  "futures-sink",
  "futures-util",
  "http",
- "indexmap",
+ "indexmap 1.9.3",
  "slab",
  "tokio",
  "tokio-util",
@@ -931,6 +937,12 @@ checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
  "ahash",
 ]
+
+[[package]]
+name = "hashbrown"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
 
 [[package]]
 name = "heck"
@@ -1045,12 +1057,22 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "1.9.2"
+version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
+checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
+]
+
+[[package]]
+name = "indexmap"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5477fe2230a79769d8dc68e0eabf5437907c0457a5614a9e8dddb67f65eb65d"
+dependencies = [
+ "equivalent",
+ "hashbrown 0.14.0",
  "rayon",
  "serde",
 ]
@@ -1890,7 +1912,7 @@ version = "1.0.94"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c533a59c9d8a93a09c6ab31f0fd5e5f4dd1b8fc9434804029839884765d04ea"
 dependencies = [
- "indexmap",
+ "indexmap 1.9.3",
  "itoa",
  "ryu",
  "serde",
@@ -1967,7 +1989,7 @@ dependencies = [
  "bincode",
  "clap",
  "colored",
- "indexmap",
+ "indexmap 2.0.0",
  "once_cell",
  "parking_lot",
  "rand",
@@ -2092,7 +2114,7 @@ name = "snarkvm-circuit-environment"
 version = "0.9.14"
 dependencies = [
  "criterion",
- "indexmap",
+ "indexmap 2.0.0",
  "itertools",
  "nom",
  "num-traits",
@@ -2288,7 +2310,7 @@ name = "snarkvm-console-network"
 version = "0.9.14"
 dependencies = [
  "anyhow",
- "indexmap",
+ "indexmap 2.0.0",
  "itertools",
  "lazy_static",
  "once_cell",
@@ -2328,7 +2350,7 @@ dependencies = [
  "bincode",
  "enum_index",
  "enum_index_derive",
- "indexmap",
+ "indexmap 2.0.0",
  "num-derive",
  "num-traits",
  "once_cell",
@@ -2472,7 +2494,7 @@ dependencies = [
  "colored",
  "curl",
  "hex",
- "indexmap",
+ "indexmap 2.0.0",
  "itertools",
  "lazy_static",
  "parking_lot",
@@ -2498,7 +2520,7 @@ dependencies = [
  "anyhow",
  "cfg-if",
  "fxhash",
- "indexmap",
+ "indexmap 2.0.0",
  "itertools",
  "snarkvm-curves",
  "snarkvm-fields",
@@ -2516,7 +2538,7 @@ dependencies = [
  "blake2",
  "colored",
  "criterion",
- "indexmap",
+ "indexmap 2.0.0",
  "once_cell",
  "parking_lot",
  "paste",
